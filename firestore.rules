@@ -1,0 +1,12 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All application Firestore reads/writes go through trusted Next.js server
+    // routes using the Firebase Admin SDK. Firebase Admin bypasses these rules.
+    // The browser uses Firebase only for Authentication, never direct Firestore.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -1,0 +1,14 @@
+node_modules
+.next
+out
+.env
+.env.local
+.env.*.local
+.DS_Store
+npm-debug.log*
+
+keo-hairven-firebase-adminsdk.json
+
+*.tsbuildinfo
+
+.superpowers/

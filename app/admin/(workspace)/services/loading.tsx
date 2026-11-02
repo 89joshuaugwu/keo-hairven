@@ -1,0 +1,1 @@
+export default function Loading(){return <main className="admin-services-content" aria-busy="true"><div className="admin-services-head"><div><div className="eyebrow">KEO HAIRVEN</div><h1>Your services</h1></div></div><div className="admin-services-cols"><div className="admin-service-loading-card"/><div className="admin-service-loading-card"/></div></main>}

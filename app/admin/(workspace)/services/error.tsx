@@ -1,0 +1,2 @@
+"use client";
+export default function ErrorState({reset}:{reset:()=>void}){return <main className="admin-services-content"><div className="admin-services-head"><div><div className="eyebrow">SERVICES</div><h1>Something needs another try.</h1></div></div><div className="admin-products-notice">The service workspace could not be loaded. No service data was changed.</div><button className="button button-outline" type="button" onClick={reset}>Try again</button></main>}
