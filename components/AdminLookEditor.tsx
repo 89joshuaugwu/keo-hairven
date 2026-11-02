@@ -1,4 +1,6 @@
 "use client";
+import { UnsavedChangesGuard } from "@/components/UnsavedChangesGuard";
+import { ModalDialog } from "@/components/ModalDialog";
 import { useCategoryOptions, useCategoryLabel } from "@/components/CategoryProvider";
 
 import Image from "next/image";
@@ -75,11 +77,6 @@ export function AdminLookEditor({ initialLook, initialMedia, starterFallbackMedi
   const lastFileRef = useRef<File | null>(null);
 
   const markDirty = () => { setDirty(true); if (saveState === "saved") setSaveState("idle"); };
-  useEffect(() => {
-    const onBeforeUnload = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ""; } };
-    window.addEventListener("beforeunload", onBeforeUnload);
-    return () => window.removeEventListener("beforeunload", onBeforeUnload);
-  }, [dirty]);
 
   const primaryMedia = media[0];
   const fallbackPrimary = starterFallbackMedia.find((item) => item.kind === "image") || starterFallbackMedia[0];
@@ -278,7 +275,8 @@ export function AdminLookEditor({ initialLook, initialMedia, starterFallbackMedi
       <div className="admin-product-savebar"><span>{saveState === "saving" ? "Saving…" : saveState === "saved" ? feedback : saveState === "conflict" ? "Conflict — refresh before continuing" : dirty ? "Unsaved changes" : feedback || `${recordId ? "Look" : "New look"} · ${status}`}</span><button className="button button-outline" type="button" disabled={saveState === "saving"} onClick={() => void saveDraft()}>Save draft</button><button className="button button-primary" type="button" onClick={() => document.getElementById("look-preview-card")?.scrollIntoView({ behavior: "smooth", block: "center" })}>Preview <span aria-hidden="true">→</span></button></div>
       {(saveState === "error" || saveState === "conflict" || (feedback && !["Saved just now.", "Your look is live. View it in the gallery."].includes(feedback))) && <div className="admin-editor-feedback" role="alert">{feedback}{saveState === "conflict" && <button type="button" onClick={() => window.location.reload()}>Refresh editor</button>}</div>}
 
-      {mediaOpen && <div className="admin-media-picker-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaOpen(false); }}><section className="admin-media-picker" role="dialog" aria-modal="true" aria-label="Choose gallery media"><div className="admin-media-picker-head"><div><div className="eyebrow">MEDIA LIBRARY</div><h2>Choose media</h2></div><button type="button" aria-label="Close media library" onClick={() => setMediaOpen(false)}>×</button></div>{libraryLoading ? <p>Loading media…</p> : library.length ? <div className="admin-media-picker-grid">{library.map((item) => <button type="button" key={item.id} onClick={() => { setMedia((current) => current.some((entry) => entry.id === item.id) ? current : [...current, item]); setMediaOpen(false); markDirty(); }}><span>{item.resourceType === "image" ? <Image src={item.secureUrl} alt={item.alt || "Media library image"} fill sizes="140px" style={{ objectFit: "cover" }} /> : <video src={item.secureUrl} muted playsInline preload="metadata" aria-label={item.alt || "Media library video"} />}</span><small>{item.alt || (item.resourceType === "video" ? "Video · add a description" : "No image description yet")}</small></button>)}</div> : <div className="admin-media-picker-empty"><h3>No uploaded media yet.</h3><p>Upload the first gallery photo or short video from this editor.</p></div>}</section></div>}
+      {mediaOpen && <ModalDialog open onClose={() => setMediaOpen(false)} label="Choose gallery media" className="studio-media-dialog"><section className="admin-media-picker"><div className="admin-media-picker-head"><div><div className="eyebrow">MEDIA LIBRARY</div><h2>Choose media</h2></div><button type="button" aria-label="Close media library" onClick={() => setMediaOpen(false)}>×</button></div>{libraryLoading ? <p>Loading media…</p> : library.length ? <div className="admin-media-picker-grid">{library.map((item) => <button type="button" key={item.id} onClick={() => { setMedia((current) => current.some((entry) => entry.id === item.id) ? current : [...current, item]); setMediaOpen(false); markDirty(); }}><span>{item.resourceType === "image" ? <Image src={item.secureUrl} alt={item.alt || "Media library image"} fill sizes="140px" style={{ objectFit: "cover" }} /> : <video src={item.secureUrl} muted playsInline preload="metadata" aria-label={item.alt || "Media library video"} />}</span><small>{item.alt || (item.resourceType === "video" ? "Video · add a description" : "No image description yet")}</small></button>)}</div> : <div className="admin-media-picker-empty"><h3>No uploaded media yet.</h3><p>Upload the first gallery photo or short video from this editor.</p></div>}</section></ModalDialog>}
+      <UnsavedChangesGuard dirty={dirty} />
     </div>
   );
 }

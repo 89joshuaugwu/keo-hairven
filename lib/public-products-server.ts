@@ -60,7 +60,7 @@ function browseFromDoc(id: string, raw: Record<string, any>): BrowseProduct | nu
   const category = typeof raw.category === "string" ? raw.category : null;
   const priceMode = ["fixed", "from", "range", "hidden", "quote"].includes(raw.priceMode) ? raw.priceMode : "quote";
   const availability = ["available", "made-to-order", "confirm", "unavailable"].includes(raw.availability) ? raw.availability : "confirm";
-  return {
+  const product: BrowseProduct = {
     id,
     slug: raw.slug,
     title: raw.title,
@@ -85,6 +85,7 @@ function browseFromDoc(id: string, raw: Record<string, any>): BrowseProduct | nu
     designPreview: false,
     featuredOrder: Number.isFinite(raw.featuredOrder) ? Number(raw.featuredOrder) : 100,
   };
+  return { ...product, variants: validVariants(raw.variants, product) };
 }
 
 async function suppressedProductIds(){const db=getAdminDb();const ids=await getStarterSuppressions("products");if(!db)return ids;const snap=await db.collection("products").get();for(const d of snap.docs){ids.add(d.id);const r=d.data();if(r.sourceStarterId)ids.add(r.sourceStarterId);const starter=getBrowseProducts(true).find(p=>p.slug===r.slug);if(starter)ids.add(starter.id);}return ids;}

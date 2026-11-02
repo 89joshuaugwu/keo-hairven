@@ -1,4 +1,5 @@
 "use client";
+import { ModalDialog } from "@/components/ModalDialog";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -289,8 +290,8 @@ export function AdminMediaLibraryClient({ initialMedia, role }: { initialMedia: 
       <input ref={replaceInputRef} className="sr-only" type="file" accept={replaceTarget?.resourceType === "video" ? "video/mp4,video/webm" : "image/jpeg,image/png,image/webp"} onChange={onReplaceFileChange} />
       {replaceTarget && upload.mode !== "idle" && <div className="admin-media-floating-progress" role="status"><b>Replacing {replaceTarget.label}</b><p>{upload.mode === "signing" ? "Preparing upload…" : upload.mode === "uploading" ? `Uploading ${upload.progress}%` : upload.mode === "finalising" ? "Saving replacement…" : upload.message}</p>{upload.mode === "uploading" && <button type="button" onClick={() => xhrRef.current?.abort()}>Cancel</button>}</div>}
 
-      {uploadOpen && <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && upload.mode === "idle") setUploadOpen(false); }}>
-        <section className="admin-media-modal admin-media-upload-modal" role="dialog" aria-modal="true" aria-label="Upload media">
+      {uploadOpen && <ModalDialog open onClose={() => { if (["idle", "error"].includes(upload.mode)) setUploadOpen(false); }} label="Upload media" className="studio-media-dialog">
+        <section className="admin-media-modal admin-media-upload-modal">
           <div className="admin-media-modal-head"><div><div className="eyebrow">MEDIA LIBRARY</div><h2>Upload media</h2></div><button type="button" aria-label="Close upload" onClick={() => setUploadOpen(false)} disabled={!["idle", "error"].includes(upload.mode)}>×</button></div>
           <button className="admin-media-file-picker" type="button" onClick={() => uploadInputRef.current?.click()}><span>+</span><b>{uploadDraft.file ? uploadDraft.file.name : "Choose a photo or short video"}</b><small>JPG/PNG/WebP ≤8 MB · MP4/WebM ≤20 MB and ≤10 seconds</small></button>
           <input ref={uploadInputRef} className="sr-only" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" onChange={onUploadFileChange} />
@@ -301,10 +302,10 @@ export function AdminMediaLibraryClient({ initialMedia, role }: { initialMedia: 
           {upload.mode !== "idle" && <div className="admin-upload-progress" role="status"><div><span style={{ width: `${upload.progress}%` }} /></div><p>{upload.mode === "signing" ? "Preparing upload…" : upload.mode === "uploading" ? `Uploading ${upload.progress}%` : upload.mode === "finalising" ? "Saving media…" : upload.message}</p>{upload.mode === "uploading" && <button type="button" onClick={() => xhrRef.current?.abort()}>Cancel</button>}</div>}
           <div className="admin-media-modal-actions"><button className="button button-outline" type="button" onClick={() => setUploadOpen(false)} disabled={!['idle','error'].includes(upload.mode)}>Cancel</button><button className="button button-primary" type="button" disabled={!uploadDraft.file || !['idle','error'].includes(upload.mode)} onClick={() => uploadDraft.file && void uploadFile(uploadDraft.file)}>{upload.mode === "error" ? "Retry upload" : "Upload media"}</button></div>
         </section>
-      </div>}
+      </ModalDialog>}
 
-      {selected && detailsDraft && <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) closeDetails(); }}>
-        <section className="admin-media-modal admin-media-details-modal" role="dialog" aria-modal="true" aria-label={`Media details for ${selected.label}`}>
+      {selected && detailsDraft && <ModalDialog open onClose={closeDetails} label={`Media details for ${selected.label}`} className="studio-media-dialog">
+        <section className="admin-media-modal admin-media-details-modal">
           <div className="admin-media-modal-head"><div><div className="eyebrow">MEDIA DETAILS</div><h2>{selected.label}</h2></div><button type="button" aria-label="Close media details" onClick={closeDetails}>×</button></div>
           <div className="admin-media-details-grid">
             <div>
@@ -328,7 +329,7 @@ export function AdminMediaLibraryClient({ initialMedia, role }: { initialMedia: 
           {feedback && <div className="admin-media-modal-feedback" role="status">{feedback}</div>}
           <div className="admin-media-modal-actions"><button type="button" className="button button-outline" onClick={closeDetails}>Close</button>{!selected.starter && selected.status === "active" && <button type="button" className="button button-outline" onClick={() => openReplace(selected)}>Replace file</button>}</div>
         </section>
-      </div>}
+      </ModalDialog>}
     </main>
   );
 }

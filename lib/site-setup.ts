@@ -94,7 +94,7 @@ async function copyBundledToCloudinary(item: ReturnType<typeof getStarterMediaLi
 }
 
 function productDescription(title: string) {
-  return `${title}. Message Zara to confirm the colour, finish and current availability.`;
+  return `${title}. Message KEO Hairven to confirm the colour, finish and current availability.`;
 }
 
 function mediaIdsForLook(lookId: string) {

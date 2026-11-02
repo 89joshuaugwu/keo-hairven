@@ -29,7 +29,7 @@ const CONNECTIONS_COLLECTION = "aiConnections";
 type StoredCipher = { iv: string; tag: string; ciphertext: string };
 type StoredConnection = Omit<AdminAiConnection, "id"> & { apiKeyCipher?: StoredCipher; createdAt?: unknown; updatedAt?: unknown };
 
-type RuntimeConnection = AdminAiConnection & { apiKey: string };
+export type RuntimeConnection = AdminAiConnection & { apiKey: string };
 
 function lagosDayKey(date = new Date()) {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -49,9 +49,9 @@ function encryptionKey() {
     const decoded = Buffer.from(source, "base64");
     if (decoded.length === 32) return decoded;
   } catch {
-    // fall through to deterministic key derivation for an existing strong secret.
+    // Invalid keys must not enable secret storage.
   }
-  return crypto.createHash("sha256").update(source).digest();
+  return null;
 }
 
 export function aiEncryptionReady() {
@@ -129,7 +129,7 @@ async function usageToday() {
 
 export async function getAdminAiSettings(): Promise<AdminAiSettings> {
   const db = getAdminDb();
-  if (!db) return { ...DEFAULT_AI_SETTINGS, encryptionReady: aiEncryptionReady() };
+  if (!db) return { ...DEFAULT_AI_SETTINGS, encryptionReady: aiEncryptionReady(), environmentConfigured: Boolean(environmentAiConnection()) };
   try {
     const [settingsSnap, connectionSnap, used] = await Promise.all([
       db.collection(SETTINGS_REF[0]).doc(SETTINGS_REF[1]).get(),
@@ -145,10 +145,10 @@ export async function getAdminAiSettings(): Promise<AdminAiSettings> {
       revision: Math.max(0, Number(data.revision || 0)),
       connections,
       usageToday: used,
-      encryptionReady: aiEncryptionReady(),
+      encryptionReady: aiEncryptionReady(), environmentConfigured: Boolean(environmentAiConnection()),
     };
   } catch {
-    return { ...DEFAULT_AI_SETTINGS, encryptionReady: aiEncryptionReady() };
+    return { ...DEFAULT_AI_SETTINGS, encryptionReady: aiEncryptionReady(), environmentConfigured: Boolean(environmentAiConnection()) };
   }
 }
 
@@ -207,13 +207,13 @@ export async function updateAdminAiSettings(input: { enabled: boolean; welcomeMe
   }
 }
 
-async function testGeminiRaw(apiKey: string, model: string, question = "Reply with exactly: Zara connection is working.", timeoutMs = 8000) {
+async function testGeminiRaw(apiKey: string, model: string, question = "Reply with exactly: KEO Muse connection is working.", timeoutMs = 8000) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModelId(model))}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(cleanModelId(model))}:generateContent`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: { "content-type": "application/json", "x-goog-api-key": apiKey },
       body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: question }] }], generationConfig: { temperature: 0, maxOutputTokens: 60 } }),
       signal: controller.signal,
       cache: "no-store",
@@ -320,9 +320,16 @@ export async function testAiConnection(id: string) {
   return { ok: test.ok, code: test.ok ? "ok" : "test-failed", message: test.message, status: test.connectionStatus };
 }
 
+export function environmentAiConnection(): RuntimeConnection | null {
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
+  const model = cleanModelId(process.env.GEMINI_MODEL || DEFAULT_AI_MODEL);
+  if (!apiKey || !isValidGeminiModelId(model)) return null;
+  return { id: "environment", label: "Environment connection", provider: "gemini", model, priority: 99, enabled: true, status: "not-connected", keyHint: "Environment managed", lastTestAt: "", lastTestMessage: "Configured on your host. Test a reply to verify.", apiKey };
+}
+
 export async function getAiRuntimeSettings(): Promise<{ enabled: boolean; welcomeMessage: string; dailyCap: number; connections: RuntimeConnection[] }> {
   const db = getAdminDb();
-  if (!db) return { enabled: false, welcomeMessage: DEFAULT_AI_WELCOME, dailyCap: DEFAULT_AI_DAILY_CAP, connections: [] };
+  if (!db) return { enabled: true, welcomeMessage: DEFAULT_AI_WELCOME, dailyCap: DEFAULT_AI_DAILY_CAP, connections: [] };
   try {
     const [settingsSnap, connectionSnap] = await Promise.all([
       db.collection(SETTINGS_REF[0]).doc(SETTINGS_REF[1]).get(),
@@ -340,7 +347,7 @@ export async function getAiRuntimeSettings(): Promise<{ enabled: boolean; welcom
       enabled: settings.enabled !== false,
       welcomeMessage: String(settings.welcomeMessage || DEFAULT_AI_WELCOME),
       dailyCap: clampDailyCap(settings.dailyCap || DEFAULT_AI_DAILY_CAP),
-      connections,
+      connections: [...connections, ...(environmentAiConnection() ? [environmentAiConnection()!] : [])],
     };
   } catch {
     return { enabled: false, welcomeMessage: DEFAULT_AI_WELCOME, dailyCap: DEFAULT_AI_DAILY_CAP, connections: [] };
@@ -348,6 +355,7 @@ export async function getAiRuntimeSettings(): Promise<{ enabled: boolean; welcom
 }
 
 export async function markAiConnectionResult(id: string, input: { status: AiConnectionStatus; message: string }) {
+  if (id === "environment") return;
   const db = getAdminDb();
   if (!db) return;
   try {
@@ -357,42 +365,10 @@ export async function markAiConnectionResult(id: string, input: { status: AiConn
   }
 }
 
-async function buildAdminTestContext() {
-  const [business, faqs, services, looks, products] = await Promise.all([
-    getPublicBusinessServer(), getPublicFaqsServer(), getPublicServicesServer(), getPublicLooksServer(), getBrowseProductsServer(false),
-  ]);
-  return [
-    `Business: ${business.name}`,
-    `Location: ${business.publicLocation}`,
-    business.address ? `Public address: ${business.address}` : "Exact meeting point is not published.",
-    business.hours ? `Opening hours: ${business.hours}` : "Opening hours are not published.",
-    `WhatsApp: ${business.whatsappDisplay}`,
-    `Waybill: ${business.deliveryNote}`,
-    business.instagramUrl ? `Instagram: ${business.instagramUrl}` : "Instagram: not published",
-    business.tiktokUrl ? `TikTok: ${business.tiktokUrl}` : "TikTok: not published",
-    `Products:\n${products.map((product) => `- ${product.title} | ${productPriceLabel(product)} | availability: ${product.availability}`).join("\n") || "No published products."}`,
-    `FAQs:\n${faqs.map((faq) => `Q: ${faq.question}\nA: ${faq.answer}`).join("\n")}`,
-    `Services:\n${services.map((service) => `- ${service.categoryLabel}: ${service.detailPriceLabel}; ${service.listDescription}`).join("\n")}`,
-    `Gallery:\n${looks.map((look) => `- ${look.title}: ${look.categoryLabel}`).join("\n")}`,
-  ].join("\n");
-}
-
 export async function testAiReply(question: string) {
-  const runtime = await getAiRuntimeSettings();
-  if (!runtime.enabled) return { ok: false as const, message: "Ask KEO is currently disabled." };
-  const connection = runtime.connections[0];
-  if (!connection) return { ok: false as const, message: "Add and enable a Gemini connection first." };
-  const context = await buildAdminTestContext();
-  const prompt = `You are Ask KEO, the customer-facing guide for KEO Hairven. Answer only from the approved public context below. Answer every part of a multi-part question. Product lengths are identity-critical: never answer a 14-inch question using a 12-inch or 16-inch product. If a user names two lengths, compare those exact records. If a request is ambiguous, ask one short clarification instead of guessing. Do not carry an old product into a new unrelated topic. Never invent stock, availability, payment confirmation, appointments, delivery costs or timing. Keep the answer natural and brief.
-
-APPROVED PUBLIC CONTEXT:
-${context}
-
-QUESTION:
-${question.slice(0, 1000)}`
-  const result = await testGeminiRaw(connection.apiKey, connection.model, prompt, 10000);
-  await markAiConnectionResult(connection.id, { status: result.connectionStatus, message: result.message });
-  return result.ok ? { ok: true as const, message: result.message } : { ok: false as const, message: result.message };
+  const { replyWithMuse } = await import("@/lib/muse-server");
+  const reply = await replyWithMuse({ message: question.slice(0, 1000), history: [] }, "owner-test");
+  return { ok: reply.mode === "ai", message: reply.mode === "ai" ? reply.text : `${reply.notice || "Saved answer"}\n\n${reply.text}` };
 }
 
 export function aiRateLimitExpiry() {

@@ -1,6 +1,9 @@
 "use client";
+import { UnsavedChangesGuard } from "@/components/UnsavedChangesGuard";
 
 import Link from "next/link";
+import { ModalDialog } from "@/components/ModalDialog";
+import { AdminConfirmDialog } from "@/components/AdminConfirmDialog";
 import { useMemo, useState } from "react";
 import { adminFetch } from "@/lib/admin-client";
 import { DEFAULT_AI_MODEL, type AdminAiConnection, type AdminAiSettings } from "@/lib/ai-settings";
@@ -42,21 +45,21 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
   const [testReply, setTestReply] = useState("");
   const [testingReply, setTestingReply] = useState(false);
   const [fallbackPreview, setFallbackPreview] = useState(false);
+  const [showKey, setShowKey] = useState(false);
 
   const orderedConnections = useMemo(
     () => [...settings.connections].sort((a, b) => a.priority - b.priority || a.label.localeCompare(b.label)),
     [settings.connections]
   );
 
-  const refreshSettings = (next?: AdminAiSettings) => {
+  const refreshSettings = (next?: AdminAiSettings, updateDraft = false) => {
     if (!next) return;
     setSettings(next);
-    setEnabled(next.enabled);
-    setWelcomeMessage(next.welcomeMessage);
-    setDailyCap(next.dailyCap);
+    if (updateDraft) { setEnabled(next.enabled); setWelcomeMessage(next.welcomeMessage); setDailyCap(next.dailyCap); }
   };
 
   const saveSettings = async () => {
+    if (saving) return;
     setSaving(true);
     setFeedback("");
     try {
@@ -68,28 +71,28 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
       const payload = await response.json().catch(() => ({})) as { settings?: AdminAiSettings; message?: string };
       if (!response.ok) {
         setFeedbackKind("error");
-        setFeedback(payload.message || "Ask KEO settings could not be saved.");
+        setFeedback(payload.message || "KEO Muse settings could not be saved.");
         return;
       }
-      refreshSettings(payload.settings);
+      refreshSettings(payload.settings, true);
       setFeedbackKind("success");
-      setFeedback(payload.message || "Ask KEO settings saved.");
+      setFeedback(payload.message || "KEO Muse settings saved.");
     } catch {
       setFeedbackKind("error");
-      setFeedback("Ask KEO settings could not be saved. Check your connection and try again.");
+      setFeedback("KEO Muse settings could not be saved. Check your connection and try again.");
     } finally {
       setSaving(false);
     }
   };
 
-  const openAdd = () => setConnectionDraft(emptyConnection(orderedConnections.length + 1));
-  const openEdit = (connection: AdminAiConnection) => setConnectionDraft({
+  const openAdd = () => { setFeedback(""); setShowKey(false); setConnectionDraft(emptyConnection(orderedConnections.length + 1)); };
+  const openEdit = (connection: AdminAiConnection) => { setFeedback(""); setShowKey(false); setConnectionDraft({
     id: connection.id,
     label: connection.label,
     apiKey: "",
     model: connection.model,
     priority: connection.priority,
-  });
+  }); };
 
   const saveConnection = async () => {
     if (!connectionDraft || connectionBusy) return;
@@ -202,7 +205,7 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
         body: JSON.stringify({ question }),
       });
       const payload = await response.json().catch(() => ({})) as { message?: string };
-      setTestReply(payload.message || (response.ok ? "Ask KEO responded." : "No test reply was returned."));
+      setTestReply(payload.message || (response.ok ? "KEO Muse responded." : "No test reply was returned."));
     } catch {
       setTestReply("The test reply could not run.");
     } finally {
@@ -216,7 +219,7 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
     <main className="admin-ai-content">
       <header className="admin-ai-head">
         <div className="eyebrow">KEO HAIRVEN</div>
-        <h1>Ask KEO, simply managed</h1>
+        <h1>KEO Muse, simply managed</h1>
       </header>
 
       <div className="admin-ai-notice">The assistant answers from your published business information. It does not confirm payments, stock or appointments.</div>
@@ -227,7 +230,7 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
           <section className="admin-editor-panel admin-ai-panel">
             <h2>Assistant settings</h2>
             <div className="admin-ai-row">
-              <div><b>Show Ask KEO on the website</b><p>Saved FAQs and WhatsApp remain the fallback when AI is unavailable.</p></div>
+              <div><b>Show KEO Muse on the website</b><p>Saved FAQs and WhatsApp remain the fallback when AI is unavailable.</p></div>
               <button type="button" role="switch" aria-checked={enabled} className={`admin-content-switch${enabled ? " is-on" : ""}`} onClick={() => setEnabled((value) => !value)}><span /><em>{enabled ? "On" : "Off"}</em></button>
             </div>
             <label className="admin-editor-field"><span>Welcome message</span><textarea rows={4} maxLength={500} value={welcomeMessage} onChange={(event) => setWelcomeMessage(event.target.value)} /></label>
@@ -237,13 +240,14 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
               <div><b>{dailyCap}</b><span>daily cap</span></div>
               <div className="admin-ai-progress" aria-label={`${capPercent}% of daily cap used`}><i style={{ width: `${capPercent}%` }} /></div>
             </div>
-            <div className="admin-ai-row is-link"><div><b>What Zara knows</b><p>Published products, services, FAQs, gallery labels and approved business details.</p></div><Link href="/admin/content">Review ↗</Link></div>
+            <div className="admin-ai-row is-link"><div><b>What Muse knows</b><p>Published products, services, FAQs, gallery labels and approved business details.</p></div><Link href="/admin/content">Review ↗</Link></div>
             <button type="button" className="button button-primary admin-ai-save" onClick={() => void saveSettings()} disabled={saving}>{saving ? "Saving…" : "Save assistant settings"}</button>
           </section>
 
           <section className="admin-editor-panel admin-ai-panel">
-            <div className="admin-ai-section-head"><div><h2>Connections</h2><p>Primary and recovery Gemini connections are managed here. No Gemini API key, model ID or daily cap is read from ENV.</p></div><button type="button" className="button button-outline" onClick={openAdd}>+ Add connection</button></div>
-            {!settings.encryptionReady ? <div className="admin-ai-encryption-warning"><b>Connection storage needs one server encryption secret.</b><p>Keep `AI_KEYS_ENCRYPTION_KEY_BASE64` configured once. Gemini keys themselves are added and changed only from this page.</p></div> : null}
+            <div className="admin-ai-section-head"><div><h2>Connections</h2><p>Each reply tries at most two connections. The highest-priority enabled saved key is primary. A configured environment key is recovery; otherwise the next enabled saved key is recovery. Lower-priority keys remain on standby until you change priority or disable a selected key. Every attempt counts toward the daily cap.</p></div><button type="button" className="button button-outline" onClick={openAdd}>+ Add connection</button></div>
+            {!settings.encryptionReady ? <div className="admin-ai-encryption-warning"><b>Connection storage needs one server encryption secret.</b><p>Keep `AI_KEYS_ENCRYPTION_KEY_BASE64` configured once. Keys saved here are encrypted. A host-level GEMINI_API_KEY can also be used without saving a connection here.</p></div> : null}
+            {settings.environmentConfigured && <div className="studio-environment-note"><b>Environment connection configured</b><p>The host provides a Gemini key. It is the recovery connection after the highest-priority enabled saved key, or the primary connection when none is enabled. Run a test reply to verify it; rotate or remove this key in your host settings.</p></div>}
             <div className="admin-ai-connections">
               {orderedConnections.length ? orderedConnections.map((connection, index) => (
                 <article className="admin-ai-connection" key={connection.id}>
@@ -276,7 +280,7 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
 
           <section className="admin-editor-panel admin-ai-panel">
             <h2>When AI is unavailable</h2>
-            <p>Ask KEO immediately falls back to approved FAQ answers and a WhatsApp handoff. It never promises stock, payments, delivery timing or appointments.</p>
+            <p>KEO Muse immediately falls back to approved FAQ answers and a WhatsApp handoff. It never promises stock, payments, delivery timing or appointments.</p>
             <button type="button" className="button button-outline" onClick={() => setFallbackPreview(true)}>Preview fallback →</button>
           </section>
 
@@ -290,38 +294,32 @@ export function AdminAiManager({ initialSettings }: { initialSettings: AdminAiSe
       </div>
 
       {connectionDraft ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget && !connectionBusy) setConnectionDraft(null); }}>
-          <section className="admin-media-modal admin-ai-connection-modal" role="dialog" aria-modal="true" aria-label={connectionDraft.id ? "Edit Gemini connection" : "Add Gemini connection"}>
-            <div className="admin-media-modal-head"><div><div className="eyebrow">AI CONNECTION</div><h2>{connectionDraft.id ? "Edit connection" : "Add Gemini key"}</h2></div><button type="button" aria-label="Close" onClick={() => setConnectionDraft(null)}>×</button></div>
+        <ModalDialog open onClose={() => { if (!connectionBusy) setConnectionDraft(null); }} label={connectionDraft.id ? "Edit Gemini connection" : "Add Gemini connection"} className="studio-ai-dialog">
+          <section className="admin-media-modal admin-ai-connection-modal">
+            <div className="admin-media-modal-head"><div><div className="eyebrow">AI CONNECTION</div><h2>{connectionDraft.id ? "Edit connection" : "Add Gemini key"}</h2></div><button type="button" aria-label="Close" disabled={Boolean(connectionBusy)} onClick={() => setConnectionDraft(null)}>×</button></div>
+            {feedbackKind === "error" && feedback && <p className="admin-feedback is-error" role="alert">{feedback}</p>}
             <div className="admin-ai-modal-fields">
               <label className="admin-editor-field"><span>Connection label</span><input value={connectionDraft.label} maxLength={80} onChange={(event) => setConnectionDraft((current) => current ? { ...current, label: event.target.value } : current)} placeholder="Primary · Gemini" /></label>
-              <label className="admin-editor-field"><span>Gemini model ID</span><input value={connectionDraft.model} maxLength={80} onChange={(event) => setConnectionDraft((current) => current ? { ...current, model: event.target.value } : current)} placeholder={DEFAULT_AI_MODEL} /><small>Example: gemini-2.5-flash-lite. Changing this here takes effect without a redeploy.</small></label>
-              <label className="admin-editor-field"><span>{connectionDraft.id ? "Replace API key (optional)" : "Gemini API key"}</span><input type="password" autoComplete="new-password" value={connectionDraft.apiKey} onChange={(event) => setConnectionDraft((current) => current ? { ...current, apiKey: event.target.value } : current)} placeholder={connectionDraft.id ? "Leave blank to keep the saved key" : "Paste API key"} /><small>The key is encrypted server-side and is never shown again after saving.</small></label>
+              <label className="admin-editor-field"><span>Gemini model ID</span><input value={connectionDraft.model} maxLength={80} onChange={(event) => setConnectionDraft((current) => current ? { ...current, model: event.target.value } : current)} placeholder={DEFAULT_AI_MODEL} /><small>Example: gemini-3.1-flash-lite. Changing this here takes effect without a redeploy.</small></label>
+              <label className="admin-editor-field"><span>{connectionDraft.id ? "Replace API key (optional)" : "Gemini API key"}</span><input type={showKey ? "text" : "password"} autoComplete="new-password" value={connectionDraft.apiKey} onChange={(event) => setConnectionDraft((current) => current ? { ...current, apiKey: event.target.value } : current)} placeholder={connectionDraft.id ? "Leave blank to keep the saved key" : "Paste API key"} /><button className="studio-secret-toggle" type="button" aria-pressed={showKey} onClick={() => setShowKey(value => !value)}>{showKey ? "Hide API key" : "Show API key"}</button><small>The key is encrypted server-side and is never shown again after saving.</small></label>
               <label className="admin-editor-field"><span>Priority</span><input type="number" min={1} max={20} value={connectionDraft.priority} onChange={(event) => setConnectionDraft((current) => current ? { ...current, priority: Math.max(1, Number(event.target.value || 1)) } : current)} /></label>
             </div>
-            <div className="admin-ai-modal-actions"><button type="button" className="button button-outline" onClick={() => setConnectionDraft(null)}>Cancel</button><button type="button" className="button button-primary" onClick={() => void saveConnection()} disabled={Boolean(connectionBusy)}>{connectionBusy ? "Saving & testing…" : connectionDraft.id ? "Save connection" : "Save & test connection"}</button></div>
+            <div className="admin-ai-modal-actions"><button type="button" className="button button-outline" disabled={Boolean(connectionBusy)} onClick={() => setConnectionDraft(null)}>Cancel</button><button type="button" className="button button-primary" onClick={() => void saveConnection()} disabled={Boolean(connectionBusy)}>{connectionBusy ? "Saving & testing…" : connectionDraft.id ? "Save connection" : "Save & test connection"}</button></div>
           </section>
-        </div>
+        </ModalDialog>
       ) : null}
 
-      {deleteId ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setDeleteId(null); }}>
-          <section className="admin-media-modal admin-ai-delete-modal" role="alertdialog" aria-modal="true" aria-label="Delete AI connection">
-            <div className="admin-media-modal-head"><div><div className="eyebrow">REMOVE CONNECTION</div><h2>Delete this Gemini key?</h2></div><button type="button" aria-label="Close" onClick={() => setDeleteId(null)}>×</button></div>
-            <p>This removes the encrypted key from Firestore. Ask KEO will use the next enabled connection, or saved-answer fallback if none remain.</p>
-            <div className="admin-ai-modal-actions"><button className="button button-outline" type="button" onClick={() => setDeleteId(null)}>Cancel</button><button className="button button-primary" type="button" onClick={() => void deleteConnection()} disabled={Boolean(connectionBusy)}>Delete connection</button></div>
-          </section>
-        </div>
-      ) : null}
+      <AdminConfirmDialog open={Boolean(deleteId)} title="Delete this Gemini connection?" description="This permanently removes the saved encrypted key. KEO Muse will use another enabled connection, an environment key, or saved answers." error={feedbackKind === "error" ? feedback : ""} busy={Boolean(connectionBusy)} confirmLabel={connectionBusy ? "Deleting…" : "Delete connection"} destructive onCancel={() => { if (!connectionBusy) setDeleteId(null); }} onConfirm={() => { if (!connectionBusy) void deleteConnection(); }} />
 
       {fallbackPreview ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setFallbackPreview(false); }}>
-          <section className="admin-media-modal admin-ai-fallback-modal" role="dialog" aria-modal="true" aria-label="Ask KEO fallback preview">
+        <ModalDialog open onClose={() => setFallbackPreview(false)} label="KEO Muse fallback preview" className="studio-ai-dialog">
+          <section className="admin-media-modal admin-ai-fallback-modal">
             <div className="admin-media-modal-head"><div><div className="eyebrow">FALLBACK PREVIEW</div><h2>Saved answers stay useful.</h2></div><button type="button" aria-label="Close" onClick={() => setFallbackPreview(false)}>×</button></div>
-            <div className="admin-ai-fallback-card"><p>AI replies are temporarily unavailable. You can still browse saved answers or chat directly with KEO Hairven on WhatsApp.</p><div><span>Where are you located? →</span><span>How do I order? →</span><span>Can you waybill to me? →</span></div><button className="button button-primary" type="button">Chat on WhatsApp ↗</button></div>
+            <div className="admin-ai-fallback-card"><p>AI replies are temporarily unavailable. You can still browse saved answers or chat directly with KEO Hairven on WhatsApp.</p><div><span>Where are you located? →</span><span>How do I order? →</span><span>Can you waybill to me? →</span></div><Link className="button button-primary" href="/contact" target="_blank">View contact page ↗</Link></div>
           </section>
-        </div>
+        </ModalDialog>
       ) : null}
+      <UnsavedChangesGuard dirty={enabled !== settings.enabled || welcomeMessage !== settings.welcomeMessage || dailyCap !== settings.dailyCap} />
     </main>
   );
 }

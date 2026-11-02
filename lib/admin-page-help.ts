@@ -49,7 +49,7 @@ const guides: Record<string, AdminPageGuide> = {
     steps: [
       { title: "Find a look", text: "Search by name or caption. Use category, image label and status filters to narrow the list." },
       { title: "Add or edit a look", text: "Upload a look creates an entry. Edit details lets you change the name, caption, category, photos and price information." },
-      { title: "Label images correctly", text: "Distinguish Zara?s real work from campaign or inspiration images. Confirm permission before publishing identifiable client photos." },
+      { title: "Label images correctly", text: "Distinguish KEO Hairven’s real work from campaign or inspiration images. Confirm permission before publishing identifiable client photos." },
       { title: "Manage visibility", text: "Publish shows the look to customers. The More menu can duplicate it, unpublish it or move it to Trash." },
     ],
     reminder: "Removed looks are managed in Trash, where you can restore them as drafts.", links: [categories, recovery],
@@ -107,21 +107,21 @@ const guides: Record<string, AdminPageGuide> = {
       { title: "Manage questions", text: "Add or edit questions and answers, choose their groups and reorder them. An unsaved removal can be undone here; after saving, removed questions are recovered from Trash." },
       { title: "Save, preview and publish", text: "Save your draft, review the website preview and publish the changes when ready. A saved draft is separate from the published website content." },
     ],
-    reminder: "Keep answers accurate. Ask KEO also uses approved published business information when helping customers.", links: [media, recovery],
+    reminder: "Keep answers accurate. KEO Muse also uses approved published business information when helping customers.", links: [media, recovery],
   },
   settings: {
     title: "Update business details",
     intro: "Keep the contact information customers use across the website up to date.",
     steps: [
       { title: "Check contact and location", text: "Review the phone, WhatsApp, address and other contact fields. Use the business?s current details." },
-      { title: "Check business links", text: "Enter the full official social profile links, including https://. Customers and Ask KEO can use these published links." },
+      { title: "Check business links", text: "Enter the full official social profile links, including https://. Customers and KEO Muse can use these published links." },
       { title: "Review delivery information", text: "Make sure the delivery and business information matches what you actually offer." },
       { title: "Save the details", text: "Only the owner can publish these business-wide changes. Saving business details publishes them, so check the preview and field values first." },
     ],
     reminder: "Use current site content is an import/setup action. Use it intentionally to bring the existing website content into admin management.", links: [{ label: "Edit website content", href: "/admin/content" }],
   },
   ai: {
-    title: "Manage Ask KEO",
+    title: "Manage KEO Muse",
     intro: "The owner uses this page to control the website assistant and its AI connections.",
     steps: [
       { title: "Add a connection", text: "Enter a Gemini connection name and API key. Save and test the connection before relying on it." },

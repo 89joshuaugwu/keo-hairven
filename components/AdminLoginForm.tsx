@@ -1,5 +1,6 @@
 "use client";
 
+import { ModalDialog } from "@/components/ModalDialog";
 import { FormEvent, useEffect, useState } from "react";
 import {
   GoogleAuthProvider,
@@ -131,6 +132,8 @@ export function AdminLoginForm() {
     event.preventDefault();
     if (resetBusy) return;
     const auth = getFirebaseClientAuth();
+    if (!auth) { setError("Firebase authentication is not configured for this site."); setResetOpen(false); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(resetEmail.trim())) { setError("Enter a valid email address for password reset."); setResetOpen(false); return; }
     setResetBusy(true);
     try {
       if (auth && resetEmail.trim()) {
@@ -193,11 +196,8 @@ export function AdminLoginForm() {
         <button className="admin-forgot-link" type="button" onClick={openReset}>Forgot your password?</button>
       </form>
 
-      {resetOpen && (
-        <div className="admin-reset-overlay" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setResetOpen(false);
-        }}>
-          <section className="admin-reset-modal" role="dialog" aria-modal="true" aria-labelledby="admin-reset-title">
+      <ModalDialog open={resetOpen} onClose={() => { if (!resetBusy) setResetOpen(false); }} label="Reset your password" className="studio-reset-dialog">
+          <section className="admin-reset-modal">
             <button className="admin-reset-close" type="button" onClick={() => setResetOpen(false)} aria-label="Close password reset">×</button>
             <div className="eyebrow">PASSWORD RESET</div>
             <h2 id="admin-reset-title">Reset your password.</h2>
@@ -207,7 +207,7 @@ export function AdminLoginForm() {
                 <button className="button button-primary" type="button" onClick={() => setResetOpen(false)}>Done</button>
               </>
             ) : (
-              <form onSubmit={submitReset}>
+              <form onSubmit={submitReset} noValidate>
                 <p>Enter the email address you use for KEO Hairven admin access.</p>
                 <label className="admin-login-field">
                   <span>Email address</span>
@@ -219,8 +219,7 @@ export function AdminLoginForm() {
               </form>
             )}
           </section>
-        </div>
-      )}
+      </ModalDialog>
     </>
   );
 }

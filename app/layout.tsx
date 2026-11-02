@@ -7,6 +7,9 @@ import { getSiteUrl } from "@/lib/site-url";
 import { MotionProvider } from "@/components/MotionProvider";
 import "./globals.css";
 import "./editorial.css";
+import "./muse.css";
+import "./studio.css";
+import { KeoMuse } from "@/components/KeoMuse";
 
 const siteUrl = getSiteUrl();
 
@@ -77,7 +80,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body>
-        <CategoryProvider entries={{products:products.entries,gallery:gallery.entries}}><PublicBusinessProvider business={business}><MotionProvider>{children}</MotionProvider></PublicBusinessProvider></CategoryProvider>
+        <CategoryProvider entries={{products:products.entries,gallery:gallery.entries}}><PublicBusinessProvider business={business}><MotionProvider>{children}<KeoMuse /></MotionProvider></PublicBusinessProvider></CategoryProvider>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }} />
       </body>
     </html>

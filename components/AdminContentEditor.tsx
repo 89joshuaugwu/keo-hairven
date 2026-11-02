@@ -1,4 +1,6 @@
 "use client";
+import { UnsavedChangesGuard } from "@/components/UnsavedChangesGuard";
+import { ModalDialog } from "@/components/ModalDialog";
 
 import Image from "next/image";
 import Link from "next/link";
@@ -10,7 +12,7 @@ import type { AdminContentDraft, AdminFaqRecord } from "@/lib/site-content";
 
 const faqCategoryOptions: readonly BrandSelectOption<AdminFaqRecord["category"]>[] = [
   { value: "getting-started", label: "Getting started" },
-  { value: "appointments", label: "Appointments" },
+  { value: "appointments", label: "Choosing your hair" },
   { value: "products-pricing", label: "Products & pricing" },
   { value: "waybill-delivery", label: "Waybill & delivery" },
 ];
@@ -18,7 +20,7 @@ const faqCategoryOptions: readonly BrandSelectOption<AdminFaqRecord["category"]>
 type HomeVisibilityKey = "showBeautyEdit" | "showNailEditorial" | "showCollection" | "showHowItWorks";
 
 const homeSectionToggles: readonly { key: HomeVisibilityKey; label: string; help: string }[] = [
-  { key: "showBeautyEdit", label: "Shop by collection", help: "Hair collection cards beneath the hero." },
+  { key: "showBeautyEdit", label: "Find your mood", help: "Interactive hair moodboard beneath the hero." },
   { key: "showNailEditorial", label: "Hair editorial", help: "Hair-focused editorial section." },
   { key: "showCollection", label: "Hair collection", help: "The hair collection feature and collection call-to-action." },
   { key: "showHowItWorks", label: "Three easy steps", help: "The discovery-to-WhatsApp explanation near the end of Home." },
@@ -299,7 +301,7 @@ export function AdminContentEditor({ initialContent, initialFaqs, initialTrashed
 
           <section className="admin-editor-panel admin-content-panel admin-content-faq-panel">
             <div className="admin-editor-section-head">
-              <div><h2>FAQs</h2><p>Edit, add or reorder the approved public answers used by the FAQ page and Ask KEO.</p></div>
+              <div><h2>FAQs</h2><p>Edit, add or reorder the approved public answers used by the FAQ page and KEO Muse.</p></div>
               <button type="button" className="button button-outline" onClick={addFaq}>+ Add question</button>
             </div>
             {fieldErrors.faqs ? <div className="admin-content-inline-error">{fieldErrors.faqs}</div> : null}
@@ -372,8 +374,7 @@ export function AdminContentEditor({ initialContent, initialFaqs, initialTrashed
       </div>
 
       {mediaTarget ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setMediaTarget(null); }}>
-          <section className="admin-media-modal admin-content-picker" role="dialog" aria-modal="true" aria-label="Choose website media">
+        <ModalDialog open onClose={() => setMediaTarget(null)} label="Choose website media" className="studio-media-dialog"><section className="admin-media-modal admin-content-picker">
             <div className="admin-media-modal-head"><div><div className="eyebrow">MEDIA LIBRARY</div><h2>Choose media</h2></div><button type="button" aria-label="Close media picker" onClick={() => setMediaTarget(null)}>×</button></div>
             <div className="admin-content-picker-grid">
               {activeMedia.map((item) => (
@@ -386,13 +387,11 @@ export function AdminContentEditor({ initialContent, initialFaqs, initialTrashed
                 </button>
               ))}
             </div>
-          </section>
-        </div>
+          </section></ModalDialog>
       ) : null}
 
       {previewOpen ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewOpen(false); }}>
-          <section className="admin-media-modal admin-content-preview-modal" role="dialog" aria-modal="true" aria-label="Website content preview">
+        <ModalDialog open onClose={() => setPreviewOpen(false)} label="Website content preview" className="studio-media-dialog"><section className="admin-media-modal admin-content-preview-modal">
             <div className="admin-media-modal-head"><div><div className="eyebrow">DRAFT PREVIEW</div><h2>Review before publishing</h2></div><button type="button" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>×</button></div>
             <div className="admin-content-preview-grid">
               <article><div className="eyebrow">HOME</div><h3>{content.homeHeading.split("\n").map((line, index) => <span key={`${line}-${index}`}>{line}<br /></span>)}<em>{content.rotatingPhrases[0]}</em></h3><p>{content.homeSupportingText}</p></article>
@@ -400,9 +399,8 @@ export function AdminContentEditor({ initialContent, initialFaqs, initialTrashed
               <article className="is-dark"><div className="eyebrow">{content.ctaEyebrow}</div><h3>{content.ctaHeadingLead} <em>{content.ctaHeadingEmphasis}</em></h3><p>{content.ctaBody}</p><span className="button button-primary">{content.ctaButtonLabel} ↗</span></article>
               <article><div className="eyebrow">FAQS</div><h3>{faqs.length} approved answers</h3><p>{faqs.slice(0, 3).map((faq) => faq.question).join(" · ")}</p></article>
             </div>
-          </section>
-        </div>
+          </section></ModalDialog>
       ) : null}
-    </main>
+    <UnsavedChangesGuard dirty={dirty} /></main>
   );
 }

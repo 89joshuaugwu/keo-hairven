@@ -30,7 +30,8 @@ export function resolveAdminAccess(token: DecodedIdToken): AdminAccess {
     return { authorised: true, role: claimedRole, email, source: "claims" };
   }
 
-  if (email) {
+  // An unverified address is not proof of ownership of an allowlisted identity.
+  if (email && token.email_verified === true) {
     if (emailSet("ADMIN_OWNER_EMAILS").has(email)) {
       return { authorised: true, role: "owner", email, source: "allowlist" };
     }

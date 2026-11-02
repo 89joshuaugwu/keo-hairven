@@ -1,6 +1,7 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useMemo, useRef, useState } from "react";
+import { MuseTrigger } from "@/components/MuseTrigger";
 import { BrandSelect } from "@/components/BrandSelect";
 import { usePublicBusiness } from "@/components/PublicBusinessProvider";
 import { whatsappUrl } from "@/lib/site";
@@ -30,6 +31,7 @@ async function copyText(value: string) {
 
 export function ContactEnquiry() {
   const business = usePublicBusiness();
+  const messageRef = useRef<HTMLTextAreaElement>(null);
   const [topic, setTopic] = useState<Topic>("products");
   const [name, setName] = useState("");
   const [message, setMessage] = useState("");
@@ -48,6 +50,7 @@ export function ContactEnquiry() {
     setStatus("");
     if (!message.trim()) {
       setError("Please add a short message explaining your hair enquiry.");
+      messageRef.current?.focus();
       return;
     }
     setError("");
@@ -72,9 +75,9 @@ export function ContactEnquiry() {
         <h2>A little chat.<br />A lovely <em>new look.</em></h2>
         {business.whatsappE164 ? <a className="contact-phone" href={`tel:${business.whatsappE164}`}>{business.whatsappDisplay}</a> : <p>Our direct WhatsApp contact will be published here shortly.</p>}
         <div className="contact-dark-actions">
-          <a className="button button-primary" href={whatsappUrl(`Hi ${business.name}! I found you through the website and I’d like to make an enquiry.`, business.whatsappDigits)} target="_blank" rel="noopener noreferrer">
+          {business.whatsappDigits ? <a className="button button-primary" href={whatsappUrl(`Hi ${business.name}! I found you through the website and I’d like to make an enquiry.`, business.whatsappDigits)} target="_blank" rel="noopener noreferrer">
             {business.whatsappDigits ? "Open WhatsApp" : "Contact details pending"} <span aria-hidden="true">↗</span>
-          </a>
+          </a> : <MuseTrigger className="button button-light">Ask KEO Muse ✦</MuseTrigger>}
           {business.whatsappDigits ? <button className="button contact-copy-button" type="button" onClick={copyNumber}>Copy number</button> : null}
         </div>
 
@@ -133,6 +136,7 @@ export function ContactEnquiry() {
         <label className="contact-field">
           <span>Your message</span>
           <textarea
+            ref={messageRef}
             value={message}
             onChange={(event) => {
               setMessage(event.target.value.slice(0, 1000));
@@ -149,11 +153,12 @@ export function ContactEnquiry() {
         {error && <p className="contact-form-error" id="contact-message-error">{error}</p>}
 
         <div className="contact-form-actions">
-          <button className="button button-primary" type="submit">
+          <button className="button button-primary" type="submit" disabled={!business.whatsappDigits}>
             Continue to WhatsApp <span aria-hidden="true">↗</span>
           </button>
           <button className="button button-outline" type="button" onClick={copyMessage}>Copy message</button>
         </div>
+        {!business.whatsappDigits && <p className="contact-form-micro">Direct contact is being set up. You can copy your message, or ask KEO Muse about the website.</p>}
         <p className="contact-form-micro">You’ll review and send the message in WhatsApp. This form does not confirm an order.</p>
         {status && <p className="contact-copy-status" role="status">{status}</p>}
       </form>

@@ -1,4 +1,5 @@
 "use client";
+import { MuseTrigger } from "@/components/MuseTrigger";
 import { useCategoryOptions } from "@/components/CategoryProvider";
 
 import Image from "next/image";
@@ -157,8 +158,8 @@ export function ProductExplorer({ products, previewMode }: { products: BrowsePro
         <div className="product-empty" role="status">
           <div className="eyebrow">CATALOGUE UPDATE</div>
           <h2>New pieces are being <em>prepared.</em></h2>
-          <p>There are no owner-confirmed products published on the website yet. Ask on WhatsApp about what is currently available.</p>
-          <a className="button button-primary" href={whatsappUrl("Hi KEO Hairven! What products are currently available?", business.whatsappDigits)} target="_blank" rel="noreferrer">Ask what’s available ↗</a>
+          <p>The next edit is on its way. Tell us the look you have in mind while we prepare the published collection.</p>
+          <div className="empty-actions"><MuseTrigger className="button button-primary" prompt="Help me choose a look while the catalogue is being prepared.">Find my look with Muse ✦</MuseTrigger><Link className="text-link" href="/collections">Explore the moodboard ↗</Link></div>
         </div>
       ) : (
         <div className="product-empty" role="status">

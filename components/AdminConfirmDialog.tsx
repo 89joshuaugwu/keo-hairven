@@ -3,12 +3,14 @@
 import { useEffect, useId, useRef } from "react";
 import { createPortal } from "react-dom";
 
-export function AdminConfirmDialog({ open, title, description, confirmLabel, destructive = false, onCancel, onConfirm }: {
+export function AdminConfirmDialog({ open, title, description, confirmLabel, destructive = false, error, busy = false, onCancel, onConfirm }: {
     open: boolean;
     title: string;
     description: string;
     confirmLabel: string;
     destructive?: boolean;
+    error?: string;
+    busy?: boolean;
     onCancel: () => void;
     onConfirm: () => void;
 }) {
@@ -31,9 +33,10 @@ export function AdminConfirmDialog({ open, title, description, confirmLabel, des
             <div className="eyebrow">{destructive ? "PERMANENT DELETION" : "RECOVERY WINDOW"}</div>
             <h2 id={titleId}>{title}</h2>
             <p id={descriptionId}>{description}</p>
+            {error && <p role="alert" className="admin-feedback is-error">{error}</p>}
             <div className="admin-confirm-buttons">
-                <button type="button" className="button button-outline" autoFocus onClick={onCancel}>Cancel</button>
-                <button type="button" className={`button button-primary${destructive ? " is-destructive" : ""}`} onClick={onConfirm}>{confirmLabel}</button>
+                <button type="button" className="button button-outline" autoFocus disabled={busy} onClick={onCancel}>Cancel</button>
+                <button type="button" className={`button button-primary${destructive ? " is-destructive" : ""}`} disabled={busy} onClick={onConfirm}>{confirmLabel}</button>
             </div>
         </dialog>, document.body,
     );

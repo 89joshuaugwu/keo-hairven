@@ -44,3 +44,13 @@ Catalogue filter/sort URLs, product options, contact forms, published content to
 
 ## Verification and limits
 See `docs/REDESIGN-VERIFICATION.md` for exact checks. Static browser mirrors verify composition and responsive CSS; they do not prove hydrated navigation, live Firebase/Cloudinary integration or enquiry delivery. Production launch still needs approved KEO photography and verified business details.
+
+## v0.20 studio and Muse extension
+
+The interactive **Find your mood** stage replaces the repeated homepage collection grid. One large photograph crossfades between three clearly labelled inspiration directions; a tactile selection list changes the copy and category link. `components/MoodStudio.tsx` owns this content. The original collection grid remains on the collections route. No autoplay mood cycling or scroll hijacking.
+
+**KEO Muse** is the brand's AI hair guide. Its espresso header, small italic m. avatar, ivory conversation surface and rose user bubbles derive from the public palette. The launcher is quiet and persistent; a native dialog owns focus, inertness and responsive bottom-sheet behavior. AI versus saved-answer states are explicit. `app/muse.css` owns these surfaces and shared dialog transitions.
+
+**KEO Studio** is the admin register. `app/studio.css` deliberately adapts the same palette: dark espresso sidebar, ivory panels, restrained rose highlights and DM Sans controls/table headings. Display typography is limited to overview/launch/login headings. Actual ready/error semantics use a muted green or warning tone with a text label, never color alone. Existing records, role checks and publishing rules are retained.
+
+`UX-CONTRACT.md` maps shared behavior and authoritative backend owners. `HANDOFF.md` supersedes older launch notes; Muse is now connected in code. External services still require the owner's credentials and live checks.

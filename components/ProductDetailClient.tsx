@@ -20,7 +20,7 @@ const faqs = [
   },
   {
     question: "Can this be sent to my location?",
-    answer: "Send your destination on WhatsApp. Zara will confirm the available waybill option, cost and timing before you commit.",
+    answer: "Send your destination on WhatsApp. KEO Hairven will confirm the available waybill option, cost and timing before you commit.",
   },
 ];
 

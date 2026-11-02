@@ -50,6 +50,7 @@ export type BrowseProduct = {
   ownerConfirmed: boolean;
   designPreview: boolean;
   featuredOrder: number;
+  variants?: ProductVariant[];
 };
 
 export type ProductDetailModel = {

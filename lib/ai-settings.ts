@@ -21,6 +21,7 @@ export type AdminAiSettings = {
   connections: AdminAiConnection[];
   usageToday: number;
   encryptionReady: boolean;
+  environmentConfigured?: boolean;
 };
 
 export type PublicAiConfig = {
@@ -28,9 +29,9 @@ export type PublicAiConfig = {
   welcomeMessage: string;
 };
 
-export const DEFAULT_AI_WELCOME = "Hi! I’m Ask KEO, your AI guide. What would you like to explore?";
+export const DEFAULT_AI_WELCOME = "Hi, I’m KEO Muse — your AI hair guide. Tell me the look you have in mind, or ask about the collection and delivery.";
 export const DEFAULT_AI_DAILY_CAP = 50;
-export const DEFAULT_AI_MODEL = "gemini-2.5-flash-lite";
+export const DEFAULT_AI_MODEL = "gemini-3.1-flash-lite";
 
 export const DEFAULT_AI_SETTINGS: AdminAiSettings = {
   enabled: true,

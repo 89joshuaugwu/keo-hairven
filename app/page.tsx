@@ -4,7 +4,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { WhatsAppCta } from "@/components/WhatsAppCta";
 import { ManagedEditorialMedia } from "@/components/ManagedEditorialMedia";
-import { CollectionCards } from "@/components/CollectionCards";
+import { MoodStudio } from "@/components/MoodStudio";
+import { MuseTrigger } from "@/components/MuseTrigger";
 import { EditorialMarquee } from "@/components/EditorialMarquee";
 import { getPublicSiteContentServer } from "@/lib/public-content-server";
 import { getBrowseProductsServer } from "@/lib/public-products-server";
@@ -33,14 +34,14 @@ export default async function HomePage() {
     <EditorialMarquee />
 
     {content.showBeautyEdit && <section id="hair-edit" className="section hair-edit" aria-labelledby="collections-heading">
-      <div className="section-heading" data-reveal><div><div className="eyebrow">A LOOK FOR EVERY YOU</div><h2 id="collections-heading">Find your <em>signature.</em></h2></div><div className="section-intro"><p>From sleek and understated to a little more statement. Start with what feels like you.</p><Link href="/collections" className="text-link">Explore all collections <span aria-hidden="true">↗</span></Link></div></div>
-      <CollectionCards />
-      <p className="editorial-disclosure">Editorial style inspiration. See product pages for actual items and availability.</p>
+      <div className="section-heading" data-reveal><div><div className="eyebrow">A LOOK FOR EVERY YOU</div><h2 id="collections-heading">Find your <em>mood.</em></h2></div><div className="section-intro"><p>From sleek and understated to a little more statement. Start with what feels like you.</p><Link href="/collections" className="text-link">Explore all collections <span aria-hidden="true">↗</span></Link></div></div>
+      <MoodStudio />
+      
     </section>}
 
     {content.showCollection && <section className="section featured-edit" aria-labelledby="featured-heading">
       <div className="section-heading" data-reveal><div><div className="eyebrow">THE COLLECTION, CONSIDERED</div><h2 id="featured-heading">Your next <em>favourite.</em></h2></div><Link href="/products" className="text-link">Browse the shop <span aria-hidden="true">↗</span></Link></div>
-      {products.length ? <div className="category-grid">{products.slice(0, 3).map((product) => <Link href={`/products/${product.slug}`} className="image-card" key={product.id}><div className="image-card-media">{product.media[0] ? <Image src={product.media[0].src} alt={product.media[0].alt} fill sizes="(max-width:640px) 100vw, 33vw" style={{ objectFit: "cover" }} /> : <div className="media-fallback">Product photo coming soon</div>}</div><div className="card-line"><h3>{product.title}</h3><span aria-hidden="true">↗</span></div><p>{productPriceLabel(product)}</p></Link>)}</div> : <div className="collection-preview" data-reveal><div className="collection-preview-photo"><Image src="/assets/campaign/hair-collection.webp" fill alt="Editorial inspiration, not available inventory" sizes="(max-width: 640px) 100vw, 40vw" style={{ objectFit: "cover" }} /><span>EDITORIAL INSPIRATION</span></div><div className="collection-preview-copy"><span className="eyebrow">GOOD HAIR STARTS WITH A CONVERSATION</span><h3>Let’s find the<br /><em>one for you.</em></h3><p>Our published catalogue is on its way. In the meantime, tell us the look you have in mind and ask about available options.</p><Link className="text-link" href="/contact">Talk to KEO Hairven <span aria-hidden="true">↗</span></Link></div></div>}
+      {products.length ? <div className="category-grid">{products.slice(0, 3).map((product) => <Link href={`/products/${product.slug}`} className="image-card" key={product.id}><div className="image-card-media">{product.media[0] ? <Image src={product.media[0].src} alt={product.media[0].alt} fill sizes="(max-width:640px) 100vw, 33vw" style={{ objectFit: "cover" }} /> : <div className="media-fallback">Product photo coming soon</div>}</div><div className="card-line"><h3>{product.title}</h3><span aria-hidden="true">↗</span></div><p>{productPriceLabel(product)}</p></Link>)}</div> : <div className="collection-preview" data-reveal><div className="collection-preview-photo"><Image src="/assets/campaign/hair-collection.webp" fill alt="Editorial inspiration, not available inventory" sizes="(max-width: 640px) 100vw, 40vw" style={{ objectFit: "cover" }} /><span>EDITORIAL INSPIRATION</span></div><div className="collection-preview-copy"><span className="eyebrow">GOOD HAIR STARTS WITH A CONVERSATION</span><h3>Let’s find the<br /><em>one for you.</em></h3><p>Our published catalogue is on its way. In the meantime, tell us the look you have in mind and ask about available options.</p><MuseTrigger className="text-link">Find a starting point with Muse <span aria-hidden="true">✦</span></MuseTrigger></div></div>}
     </section>}
 
     {content.showNailEditorial && <section className="lookbook-feature" aria-labelledby="lookbook-heading">

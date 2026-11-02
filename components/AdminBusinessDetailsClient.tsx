@@ -1,4 +1,6 @@
 "use client";
+import { UnsavedChangesGuard } from "@/components/UnsavedChangesGuard";
+import { ModalDialog } from "@/components/ModalDialog";
 
 import Image from "next/image";
 import { useMemo, useState } from "react";
@@ -190,7 +192,7 @@ export function AdminBusinessDetailsClient({ initialSettings, role, initialSetup
             <label className="admin-editor-field">
               <span>Delivery note</span>
               <textarea rows={4} value={settings.deliveryNote} maxLength={500} disabled={!canEdit} onChange={(event) => update("deliveryNote", event.target.value)} />
-              <small>Used on Product, Contact and Ask KEO waybill guidance.</small>
+              <small>Used on Product, Contact and KEO Muse delivery guidance.</small>
               {field("deliveryNote") ? <small className="admin-settings-field-error">{field("deliveryNote")}</small> : null}
             </label>
             <label className="admin-editor-field">
@@ -222,13 +224,11 @@ export function AdminBusinessDetailsClient({ initialSettings, role, initialSetup
       </div>
 
       {previewOpen ? (
-        <div className="admin-media-modal-overlay" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setPreviewOpen(false); }}>
-          <section className="admin-media-modal admin-settings-preview-modal" role="dialog" aria-modal="true" aria-label="Business details preview">
+        <ModalDialog open onClose={() => setPreviewOpen(false)} label="Business details preview" className="studio-media-dialog"><section className="admin-media-modal admin-settings-preview-modal">
             <div className="admin-media-modal-head"><div><div className="eyebrow">CUSTOMER PREVIEW</div><h2>Business details</h2></div><button type="button" aria-label="Close preview" onClick={() => setPreviewOpen(false)}>×</button></div>
             {previewCard(true)}
-          </section>
-        </div>
+          </section></ModalDialog>
       ) : null}
-    </main>
+    <UnsavedChangesGuard dirty={dirty} /></main>
   );
 }

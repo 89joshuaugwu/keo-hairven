@@ -1,26 +1,11 @@
-# AI assistant audit — 1 November 2026
+# KEO Muse — current status, v0.20.0
 
-## Finding
-The cloned assistant is still present in the uploaded project, but the public replying path was deliberately disconnected before this redesign. It is more than a hidden launcher: the public POST endpoint is disabled too. This finding is based on the current uploaded code, not assumptions about the previous site.
+The original uploaded application contained `AskZara.tsx`, an owner Gemini settings page, encryption helpers and chat presentation code. The widget was unmounted and `/api/chat` returned unconditional 503. These conditions predated the first redesign.
 
-| Area | Current source | Status |
-| --- | --- | --- |
-| Public chat interface | `components/AskZara.tsx` | Complete inherited widget branded Ask KEO; no public route/layout imports or renders it. |
-| Reply endpoint | `app/api/chat/route.ts` | POST unconditionally returns HTTP 503 and an unavailable message. It does not call a model. |
-| Public configuration | `app/api/chat/config/route.ts`, `lib/admin-ai.ts:getPublicAiConfig` | Still returns saved/default welcome/enabled configuration. An enabled config alone cannot restore chat. |
-| Owner management | `app/admin/(workspace)/ai/page.tsx`, `components/AdminAiManager.tsx` | Owner-only page, connection controls and test UI remain. |
-| Provider connection code | `lib/admin-ai.ts` | Gemini connection testing, server-side encrypted key storage, runtime settings and daily usage support remain. |
-| Answer presentation | `components/ChatRichText.tsx`, `components/ChatProductCard.tsx`, `lib/chat-presentation.ts` | Message formatting, controlled links and product-card helpers remain. |
+The new **KEO Muse** replaces that widget and is mounted from the root layout only on public routes. `/api/chat` now validates bounded requests, reads approved public data and calls the configured Gemini provider using a server-only key header. Owner-managed encrypted connections and an optional environment connection are supported. The admin menu now exposes `/admin/ai` for owners.
 
-The previous HANDOFF.md explicitly stated that the inherited public AI assistant and launcher were disabled. That earlier handoff is preserved at `docs/HANDOFF-before-editorial-upgrade.md`. Byte comparison confirmed that AskZara.tsx, the disabled reply endpoint and admin-ai.ts are unchanged from the user's original upload.
+`lib/muse-core.ts` owns validation, prompt boundaries, saved-answer fallback and provider orchestration. `lib/muse-server.ts` owns public-context loading, provider requests and transactional global/visitor counters. Model output cannot execute tools or supply arbitrary clickable actions. Product cards exclude previews and respect explicitly requested lengths. The assistant cannot process purchases, confirm stock or access private admin content.
 
-## Consequences
-- Visitors cannot open a chat from the current public pages.
-- Simply adding the widget back would display an interface whose messages still receive HTTP 503.
-- Simply turning the admin enabled switch on cannot bypass the disabled endpoint.
-- The default model identifier is `gemini-2.5-flash-lite`; the code also allows configurable model identifiers. No live provider connection or credentials were tested.
+No provider credentials were added or live Gemini call claimed. Configure credentials as described in HANDOFF.md, then use the owner test-reply control. Without a usable provider, the public widget remains useful through labelled saved answers and contact/catalogue links. Disabling the assistant in Admin hides the launcher and blocks model replies.
 
-## Scope of this task
-The user asked to check whether it exists, so this redesign preserves the disabled state and all inherited AI files. No provider key, Firestore setting, billing/cap configuration or public enablement was changed.
-
-To restore this feature later, reconnect a public widget, implement the disabled reply handler with existing runtime settings and published-content context, retain input validation/rate limits and safe reply links, and verify configured encrypted provider connections plus fallback/error behavior. That is a separate functional restoration, not a CSS visibility change.
+Privacy: no application chat archive; browser messages remain in component memory. Gemini receives the question, bounded history and public context for AI replies. Usage counters contain a hash and counts, not chat text; configure TTL as documented. Provider-side retention depends on service terms/account settings.

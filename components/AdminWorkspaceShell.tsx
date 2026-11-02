@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ModalDialog } from "@/components/ModalDialog";
 import { AdminPageHelp } from "@/components/AdminPageHelp";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -24,6 +25,8 @@ const navItems: NavItem[] = [
   { label: "Trash", href: "/admin/trash" },
   { label: "Website content", href: "/admin/content" },
   { label: "Business details", href: "/admin/settings" },
+  { label: "KEO Muse", href: "/admin/ai", ownerOnly: true },
+  { label: "Launch checklist", href: "/admin/launch", ownerOnly: true },
 ];
 
 function routeIsActive(pathname: string, href: string) {
@@ -66,8 +69,8 @@ function WorkspaceNav({ pathname, role, onNavigate }: { pathname: string; role: 
             className={`admin-workspace-navitem${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
           >
-            <span>{item.label}</span>
-            <span aria-hidden="true">›</span>
+            <span className="studio-nav-title"><span className="studio-nav-mark" aria-hidden="true">{item.href === "/admin/ai" ? "✦" : item.href === "/admin/launch" ? "✓" : item.href === "/admin" ? "◈" : "◇"}</span>{item.label}</span>
+            <span aria-hidden="true">↗</span>
           </Link>
         );
       })}
@@ -87,19 +90,8 @@ export function AdminWorkspaceShell({
   const pathname = usePathname();
   const [moreOpen, setMoreOpen] = useState(false);
   const openButtonRef = useRef<HTMLButtonElement | null>(null);
-  const initial = (email?.trim()?.[0] || "Z").toUpperCase();
+  const initial = (email?.trim()?.[0] || "K").toUpperCase();
 
-  useEffect(() => {
-    if (!moreOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setMoreOpen(false);
-        requestAnimationFrame(() => openButtonRef.current?.focus());
-      }
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [moreOpen]);
 
   const closeMore = () => setMoreOpen(false);
   const moreActive = !["/admin", "/admin/products", "/admin/gallery"].some((href) => routeIsActive(pathname, href));
@@ -108,7 +100,7 @@ export function AdminWorkspaceShell({
     <div className="admin-workspace-shell">
       <aside className="admin-workspace-sidebar">
         <Link href="/admin" aria-label="Admin overview"><BrandLogo /></Link>
-        <div className="admin-workspace-label">KEO HAIRVEN ADMIN</div>
+        <div className="admin-workspace-label">KEO STUDIO</div>
         <WorkspaceNav pathname={pathname} role={role} />
         <div className="admin-workspace-sidebottom">
           <a href="/" target="_blank" rel="noopener noreferrer">↗ View website</a>
@@ -133,7 +125,7 @@ export function AdminWorkspaceShell({
           >
             ☰
           </button>
-          <b>KEO Hairven’s workspace</b>
+          <b>Your KEO studio</b>
           <div className="admin-workspace-top-actions">
             <AdminPageHelp pathname={pathname} />
             <a href="/" target="_blank" rel="noopener noreferrer">Preview website ↗</a>
@@ -158,11 +150,8 @@ export function AdminWorkspaceShell({
         </button>
       </nav>
 
-      {moreOpen && (
-        <div className="admin-more-overlay" role="presentation" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) closeMore();
-        }}>
-          <aside id="admin-mobile-more" className="admin-more-panel" role="dialog" aria-modal="true" aria-label="More admin navigation">
+      <ModalDialog open={moreOpen} onClose={closeMore} label="Admin navigation" className="studio-nav-dialog">
+          <aside id="admin-mobile-more" className="admin-more-panel">
             <div className="admin-more-head">
               <div>
                 <div className="eyebrow">KEO HAIRVEN WORKSPACE</div>
@@ -177,8 +166,7 @@ export function AdminWorkspaceShell({
               <AdminSignOutButton />
             </div>
           </aside>
-        </div>
-      )}
+      </ModalDialog>
     </div>
   );
 }

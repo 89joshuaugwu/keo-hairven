@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { getVerifiedAdminSession } from "@/lib/admin-session";
 import { getAdminOverviewData } from "@/lib/admin-overview";
 
 export function AdminOverviewSkeleton() {
@@ -18,13 +19,13 @@ export function AdminOverviewSkeleton() {
 }
 
 export async function AdminOverviewContent() {
-  const data = await getAdminOverviewData();
+  const [data, session] = await Promise.all([getAdminOverviewData(), getVerifiedAdminSession()]);
 
   return (
     <div className="admin-overview-content">
       <div className="admin-overview-head">
         <div className="eyebrow">KEO HAIRVEN</div>
-        <h1>A little update. A lovely storefront.</h1>
+        <h1>Make room for your next chapter.</h1>
       </div>
 
       <div className={`admin-overview-notice${data.source === "live" ? " is-live" : ""}`}>
@@ -50,6 +51,8 @@ export async function AdminOverviewContent() {
           </div>
         </div>
       </section>
+
+      {session?.role === "owner" && <Link className="studio-launch-banner" href="/admin/launch"><span><b>From setup to storefront.</b><small>Owner launch checklist · connections, content and final checks</small></span><span aria-hidden="true">↗</span></Link>}
 
       <section className="admin-overview-stats" aria-label="Content counts">
         {data.stats.map((stat) => (
